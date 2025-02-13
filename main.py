@@ -13,15 +13,19 @@ scraper = cloudscraper.create_scraper()
 
 def get_usd_balance():
     url = "https://api.testnet.liqfinity.com/v1/user/wallets"
-    response = scraper.get(url, headers=headers)
-    if response.status_code == 200:
-        data = response.json()
-        usdtotal = data['data']['summary']['usdBalance']
-        usdsavl = data['data']['summary']['usdAvailableCredit']
-        usd_balance = usdtotal - usdsavl
-        return usd_balance
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
+    try:
+        response = scraper.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            usdtotal = data['data']['summary']['usdBalance']
+            usdsavl = data['data']['summary']['usdAvailableCredit']
+            usd_balance_str = str(int(usdtotal - usdsavl))
+            return usd_balance_str  # Mengembalikan string yang berisi bilangan bulat
+        else:
+            print(f"Error: {response.status_code}, {response.text}")
+            return None
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"JSON Parsing Error: {str(e)}")
         return None
 
 def log_activity(message):
@@ -29,15 +33,14 @@ def log_activity(message):
         log_file.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
     print(message)
 
-# Implement countdown_timer, lock_stake, unlock_stake, and the rest of your code
-# Make sure to use try-except for exception handling
-
 if __name__ == "__main__":
     usd_balance = get_usd_balance()
     if usd_balance is not None:
         print(f"USDT Tersedia: {usd_balance}")
+        amount = int(usd_balance)  # Konversi ke integer jika diperlukan untuk perhitungan
+    else:
+        amount = 0
 
-    amount = int(usd_balance)
     cycle_count = 0
 
     while True:
